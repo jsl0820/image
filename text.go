@@ -47,13 +47,19 @@ func (t *Text) Init() *Text {
 
 //
 func (t *Text) Draw(X, Y int) error {
+
+	h := t.Ctx.PointToFixed(t.Size*t.Space) >> 6
+
+	log.Printf("间距%#v", h)
+
 	for _, s := range t.Content {
 		pt := freetype.Pt(X, Y)
 		if _, err := t.Ctx.DrawString(s, pt); err != nil {
 			log.Println(err)
 			return err
 		}
-		Y += 20
+
+		Y += int(h)
 	}
 
 	return nil
