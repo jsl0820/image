@@ -1,84 +1,57 @@
 package image
 
 import (
-	"bufio"
 	"image"
 	"image/draw"
-	"image/jpeg"
-	"image/png"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
-	"net/http"
 	"os"
 )
 
-//判断图片编码类型
-func EncodeType(src string) string {
-	f, err := os.Open(src)
-	if err != nil {
-		log.Println(err)
-	}
-
-	buff := make([]byte, 512)
-	if _, err := f.Read(buff); err != nil {
-		log.Println(err)
-	}
-
-	return http.DetectContentType(buff)
-}
-
 //实例化
 func New(src string) *Image {
+	var img Image
 	f, err := os.Open(src)
 	if err != nil {
-		log.Println(err)
+		log.Println("打开文件出错:", err)
 		os.Exit(-1)
 	}
 
-	defer f.Close()
-	var img image.Image
+	config, coding, err := image.DecodeConfig(f)
+	if err != nil {
+		log.Println("解析图片出错%v", err)
+		return nil
+	}
+	f.Close()
 
-	if EncodeType(src) == "image/jpeg" {
-		img, err = jpeg.Decode(f)
-		if err != nil {
-			log.Printf("jpeg图片解码出错%v", err)
-		}
+	f, err = os.Open(src)
+	if err != nil {
+		log.Println("打开文件出错:", err)
+		os.Exit(-1)
 	}
 
-	if EncodeType(src) == "image/png" {
-		img, err = png.Decode(f)
-		if err != nil {
-			log.Printf("png图片解码出错%v", err)
-		}
+	img.Width = uint(config.Width)
+	img.Height = uint(config.Height)
+	img.CodingType = coding
+	m, s, e := image.Decode(f)
+	if err != nil {
+		log.Println(e)
+		return nil
 	}
 
-	width := img.Bounds().Dx()
-	height := img.Bounds().Dy()
+	img.Img = m
 
-	return &Image{
-		Src:    src,
-		Width:  width,
-		Height: height,
-		Img:    img,
-	}
+	log.Println(s)
+	return &img
 }
 
 type Image struct {
-	Src    string
-	Width  int
-	Height int
-	Img    image.Image
-	NewImg *image.NRGBA
-}
-
-//拷贝一张图片到
-func (i *Image) Copy() {
-	i.NewImg = image.NewNRGBA(i.Img.Bounds())
-	//画
-	for y := 0; y < i.Img.Bounds().Dy(); y++ {
-		for x := 0; x < i.Img.Bounds().Dx(); x++ {
-			i.NewImg.Set(x, y, i.Img.At(x, y))
-		}
-	}
+	Src        string
+	Width      uint
+	Height     uint
+	CodingType string
+	Img        image.Image
 }
 
 // 给图片加水印,
@@ -100,7 +73,6 @@ func (i *Image) WaterMark(src interface{}, X, Y int) *Image {
 func (i *Image) imgMark(img Image, X, Y int) *Image {
 	i.Copy()
 	off := image.Pt(X, Y)
-
 	draw.Draw(i.NewImg, i.Img.Bounds(), i.Img, image.ZP, draw.Src)
 	draw.Draw(i.NewImg, img.Img.Bounds().Add(off), img.Img, image.ZP, draw.Over)
 
@@ -117,6 +89,13 @@ func (i *Image) textMark(t Text, X, Y int) *Image {
 		log.Println(err)
 	}
 
+	return i
+}
+
+//重新设置图片大小
+func (i *Image) Thumb(width uint) {
+	i.Copy()
+	i.NewImg := resize.Resize(width, 0, i.Img, resize.Lanczos3)
 	return i
 }
 
