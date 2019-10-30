@@ -12,3 +12,8 @@ func TestCreate(t *testing.T){
 
 	log.Println(ins.Content)
 }
+
+//画图
+func TestDraw(t *testing.T) {
+
+}

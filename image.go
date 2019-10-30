@@ -56,9 +56,11 @@ type Image struct {
 	Img        image.Image
 }
 
-//
-func (i *Image) Copy(){
-
+// 生成
+func (i *Image) Create() image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, int(i.Width), int(i.Height))
+	draw.Draw(img, i.Img.Bounds(), &image.Uniform{i.Color}, image.ZP, draw.Src)
+	return img
 }
 
 // 给图片加水印,
@@ -78,18 +80,24 @@ func (i *Image) WaterMark(src interface{}, X, Y int) *Image {
 
 //图片水印
 func (i *Image) imgMark(img Image, X, Y int) *Image {
-	i.Copy()
+	i.Create()
 	off := image.Pt(X, Y)
-	draw.Draw(i.NewImg, i.Img.Bounds(), i.Img, image.ZP, draw.Src)
-	draw.Draw(i.NewImg, img.Img.Bounds().Add(off), img.Img, image.ZP, draw.Over)
+	//
+	draw.Draw(i.Img, i.Img.Bounds(), i.Img, image.ZP, draw.Src)
+	draw.Draw(i.Img, img.Img.Bounds().Add(off), img.Img, image.ZP, draw.Over)
 
 	return i
+}
+
+//在图片上画
+func (i *Image) Draw(src image.Image, sp image.Point){
+	draw.Draw(i.Img, i.Img.Bounds(), src, sp, draw.Over)
 }
 
 //文字水印
 func (i *Image) textMark(t Text, X, Y int) *Image {
 	t.Init()
-	i.Copy()
+	i.Create()
 	t.Ctx.SetDst(i.NewImg)
 	t.Ctx.SetClip(i.Img.Bounds())
 	if err := t.Draw(X, Y); err != nil {
@@ -101,8 +109,8 @@ func (i *Image) textMark(t Text, X, Y int) *Image {
 
 //重新设置图片大小
 func (i *Image) Thumb(width uint) {
-	i.Copy()
-	i.NewImg := resize.Resize(width, 0, i.Img, resize.Lanczos3)
+	i.Create()
+	i.Img := resize.Resize(width, 0, i.Img, resize.Lanczos3)
 	return i
 }
 
@@ -124,10 +132,4 @@ func (i *Image) SaveTo(path string, quality int) {
 		log.Println(er)
 		os.Exit(-1)
 	}
-}
-
-
-func (i *Image) CreateBackGround(){
-	m := image.NewRGBA(image.Rect(0, 0, int(i.Width), int(i.Height)))
-	draw.Draw(m, m.Bounds(), &image.Uniform{i.Color}, image.ZP, draw.Src)
 }

@@ -82,7 +82,7 @@ func (v *Verify) setContent() string{
 }
 
 // 生成验证码
-func (v *Verify) Create() {
+func (v *Verify) Create() *Verify {
 
 	conts := []string{v.setContent()}
 	//字体图片
@@ -99,16 +99,21 @@ func (v *Verify) Create() {
 		Height:v.setHeight(),
 	}
 
-	v.img = bgIamge.Draw()
+	bgIamge.Create()
+	bgIamge.Draw(testImg)
+
+	v.img = bgIamge.Img
 	v.writeNoise()
 	v.writeNoise()
 
+	return v
 	//设置验证码图片
 	//生成字体图片图片
 	// 字体内容
 	// 噪点
 	// 干扰曲线
 }
+
 
 
 //噪点
