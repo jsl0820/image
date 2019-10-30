@@ -19,51 +19,44 @@ const (
 type Verify struct {
 	Type     uint8
 	Path     string
-	Content  []byte
+	Content  string
 	Expire   uint
 	UseImgBg bool
 	UseNoise bool
 	UseCurve bool
-	FontSize uint
-	FontColor []byte
+	FontSize float32
+	FontColor color.RGBA
 	Width    uint
 	Height   uint
 	Length   uint8
-	BgColor string
+	BgColor color.RGBA
 	img 	image2.Image
 }
 
 // 宽度
-func (v *Verify) setWidth(){
+func (v *Verify) setWidth() uint {
 	if v.Width == 0 {
-		v.Width = 100;
+		size := float32(v.FontSize)
+		length := float32(v.Length)
+		v.Width = uint(length * size * 1.5 + length * size / 2)
 	}
+
+	return v.Width
 }
 
 //设置高度
-func (v *Verify) setHeight(){
+func (v *Verify) setHeight() uint {
 	if v.Height == 0 {
-		v.Width = v.FontSize * 10
-	}
-}
-
-//设置背景颜色
-func (v *Verify)setBgColor(){
-	if v.BgColor == ""{
-		v.BgColor = "#0000"
+		size := float32(v.FontSize)
+		v.Height =  uint(size * 2.5)
 	}
 
-	rgba := image2.NewRGBA(image2.Rect(0, 0, v.Width, v.Height))
-	for x := 0; x < v.Width; x++  {
-		for y := 0; y < v.Height; y++  {
-			rgba.Set(x, y, c)
-		}
-	}
+	return v.Height
 }
 
 
 // 验证码的内容
-func (v *Verify) setContent() {
+func (v *Verify) setContent() string{
 	var s string
 	if v.Type == NUM {
 		s = NUMBERS
@@ -80,17 +73,43 @@ func (v *Verify) setContent() {
 	bytes := []byte(s)
 	result := []byte{}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := 0; i < v.Length; i++ {
+	for i := 0; i < int(v.Length); i++ {
 		result = append(result, bytes[r.Intn(len(bytes))])
 	}
 
-	v.Content = result
+	v.Content = string(result)
+	return string(result)
 }
 
 // 生成验证码
 func (v *Verify) Create() {
-	v.setContent()
+
+	conts := []string{v.setContent()}
+	//字体图片
+	textImg := &Text{
+		Color: v.FontColor,
+		FontSrc: v.setContent(),
+		Content: conts,
+	}
+
+	// 背景图片
+	bgIamge := &Image{
+		Color: v.BgColor,
+		Width: v.setWidth(),
+		Height:v.setHeight(),
+	}
+
+	v.img = bgIamge.Draw()
+	v.writeNoise()
+	v.writeNoise()
+
+	//设置验证码图片
+	//生成字体图片图片
+	// 字体内容
+	// 噪点
+	// 干扰曲线
 }
+
 
 //噪点
 func (v *Verify) writeNoise(){
@@ -99,8 +118,8 @@ func (v *Verify) writeNoise(){
 			x := rand.Intn(int(v.Width))
 			for j := 0 ; j < 50 ; j++  {
 				y := rand.Intn(int(v.Height))
-				v := v.randColor()
-				v.img.Set(X, Y, C)
+				c := v.randColor()
+				v.img.Set(x, y, c)
 			}
 		}
 	}
@@ -108,7 +127,11 @@ func (v *Verify) writeNoise(){
 
 // 随机颜色
 func (v *Verify) randColor() color.RGBA {
+	r :=  rand.Intn(255)
+	g :=  rand.Intn(255)
+	b :=  rand.Intn(255)
 
+	return color.RGBA{uint8(r), uint8(g), uint8(b), 1}
 }
 
 

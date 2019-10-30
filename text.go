@@ -48,7 +48,6 @@ func (t *Text) Init() *Text {
 
 //
 func (t *Text) Draw(X, Y int) error {
-
 	h := t.Ctx.PointToFixed(t.Size*t.Space) >> 6
 	for _, s := range t.Content {
 		pt := freetype.Pt(X, Y)

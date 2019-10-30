@@ -3,6 +3,7 @@ package image
 import (
 	"bufio"
 	"image"
+	"image/color"
 	"image/draw"
 	"image/jpeg"
 	_ "image/jpeg"
@@ -43,17 +44,21 @@ func New(src string) *Image {
 	}
 
 	img.Img = m
-
-	log.Println(s)
 	return &img
 }
 
 type Image struct {
 	Src        string
+	Color      color.RGBA
 	Width      uint
 	Height     uint
 	CodingType string
 	Img        image.Image
+}
+
+//
+func (i *Image) Copy(){
+
 }
 
 // 给图片加水印,
@@ -121,3 +126,8 @@ func (i *Image) SaveTo(path string, quality int) {
 	}
 }
 
+
+func (i *Image) CreateBackGround(){
+	m := image.NewRGBA(image.Rect(0, 0, int(i.Width), int(i.Height)))
+	draw.Draw(m, m.Bounds(), &image.Uniform{i.Color}, image.ZP, draw.Src)
+}
