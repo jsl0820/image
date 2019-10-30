@@ -1,8 +1,10 @@
 package image
 
 import (
+	"bufio"
 	"image"
 	"image/draw"
+	"image/jpeg"
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
@@ -114,7 +116,8 @@ func (i *Image) SaveTo(path string, quality int) {
 	}
 
 	if err := b.Flush(); err != nil {
-		log.Println(err)
+		log.Println(er)
 		os.Exit(-1)
 	}
 }
+
