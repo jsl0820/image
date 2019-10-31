@@ -1,36 +1,36 @@
 package image
 
 import (
+	image2 "image"
 	"image/color"
+	"log"
 	"math/rand"
 	"time"
-	image2 "image"
 )
 
 const (
-	NUMBERS          = "1234567890"
-	LETTERS          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	_       CodeType = iota
-	NUM
+	NUMBERS = "1234567890"
+	LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	NUM     = iota
 	CHARS
 	MIX
 )
 
 type Verify struct {
-	Type     uint8
-	Path     string
-	Content  string
-	Expire   uint
-	UseImgBg bool
-	UseNoise bool
-	UseCurve bool
-	FontSize float32
+	Type      uint8
+	Path      string
+	Content   string
+	Expire    uint
+	UseImgBg  bool
+	UseNoise  bool
+	UseCurve  bool
+	FontSize  float32
 	FontColor color.RGBA
-	Width    uint
-	Height   uint
-	Length   uint8
-	BgColor color.RGBA
-	img 	image2.Image
+	Width     uint
+	Height    uint
+	Length    uint8
+	BgColor   color.RGBA
+	img       image2.Image
 }
 
 // 宽度
@@ -38,7 +38,7 @@ func (v *Verify) setWidth() uint {
 	if v.Width == 0 {
 		size := float32(v.FontSize)
 		length := float32(v.Length)
-		v.Width = uint(length * size * 1.5 + length * size / 2)
+		v.Width = uint(length*size*1.5 + length*size/2)
 	}
 
 	return v.Width
@@ -48,15 +48,14 @@ func (v *Verify) setWidth() uint {
 func (v *Verify) setHeight() uint {
 	if v.Height == 0 {
 		size := float32(v.FontSize)
-		v.Height =  uint(size * 2.5)
+		v.Height = uint(size * 2.5)
 	}
 
 	return v.Height
 }
 
-
 // 验证码的内容
-func (v *Verify) setContent() string{
+func (v *Verify) setContent() string {
 	var s string
 	if v.Type == NUM {
 		s = NUMBERS
@@ -83,28 +82,28 @@ func (v *Verify) setContent() string{
 
 // 生成验证码
 func (v *Verify) Create() *Verify {
-
-	conts := []string{v.setContent()}
-	//字体图片
-	textImg := &Text{
-		Color: v.FontColor,
-		FontSrc: v.setContent(),
-		Content: conts,
-	}
-
-	// 背景图片
-	bgIamge := &Image{
-		Color: v.BgColor,
-		Width: v.setWidth(),
-		Height:v.setHeight(),
-	}
-
-	bgIamge.Create()
-	bgIamge.Draw(testImg)
-
-	v.img = bgIamge.Img
-	v.writeNoise()
-	v.writeNoise()
+	//
+	//conts := []string{v.setContent()}
+	////字体图片
+	//textImg := &Text{
+	//	Color: v.FontColor,
+	//	FontSrc: v.setContent(),
+	//	Content: conts,
+	//}
+	//
+	//// 背景图片
+	//bgIamge := &Image{
+	//	BgColor: v.BgColor,
+	//	Width: v.setWidth(),
+	//	Height:v.setHeight(),
+	//}
+	//
+	//bgIamge.Create()
+	//bgIamge.Draw(testImg)
+	//
+	//v.img = bgIamge.Img
+	//v.writeNoise()
+	//v.writeNoise()
 
 	return v
 	//设置验证码图片
@@ -114,35 +113,34 @@ func (v *Verify) Create() *Verify {
 	// 干扰曲线
 }
 
-
-
 //噪点
-func (v *Verify) writeNoise(){
-	if v.UseNoise {
-		for i := 0; i<50; i++ {
-			x := rand.Intn(int(v.Width))
-			for j := 0 ; j < 50 ; j++  {
-				y := rand.Intn(int(v.Height))
-				c := v.randColor()
-				v.img.Set(x, y, c)
-			}
-		}
-	}
+func (v *Verify) writeNoiseg() {
+	log.Print("111")
+	//
+	//if v.UseNoise {
+	//	for i := 0; i<50; i++ {
+	//		x := rand.Intn(int(v.Width))
+	//		for j := 0 ; j < 50 ; j++  {
+	//			y := rand.Intn(int(v.Height))
+	//			c := v.randColor()
+	//			v.img.Set(x, y, c)
+	//		}
+	//	}
+	//}
 }
 
 // 随机颜色
 func (v *Verify) randColor() color.RGBA {
-	r :=  rand.Intn(255)
-	g :=  rand.Intn(255)
-	b :=  rand.Intn(255)
+	r := rand.Intn(255)
+	g := rand.Intn(255)
+	b := rand.Intn(255)
 
 	return color.RGBA{uint8(r), uint8(g), uint8(b), 1}
 }
 
-
 // 干扰曲线
-func (v *Verify) writeCurve(){
-	if v.UseCurve{
+func (v *Verify) writeCurve() {
+	if v.UseCurve {
 
 	}
 }
@@ -155,4 +153,3 @@ func (v *Verify) Check(input string) bool {
 
 	return false
 }
-
