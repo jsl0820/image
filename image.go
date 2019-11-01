@@ -71,13 +71,15 @@ func (i *Image) Create() *Image {
 	return i
 }
 
-// 替换掉原来图层的图片
+// Replace替换掉原来图层的图片
 func (i *Image) Replace(img *Image) *Image {
 	draw.Draw(i.Img, img.Img.Bounds(), img.Img, image.ZP, draw.Src)
 	return i
 }
 
-// 覆盖在原来的图片上面
+// Over覆盖在原来的图片上面
+// img所选的图片
+// x0,y0 其实坐标
 func (i *Image) Over(img *Image, x0, y0 int) *Image {
 	// 坐标
 	p := image.Pt(x0, y0)
@@ -88,26 +90,16 @@ func (i *Image) Over(img *Image, x0, y0 int) *Image {
 // 给图片加水印,
 // src:源 可以是 Text(文字水印)
 // 也可以是 Image(图片水印) ,
-// X, Y 坐标,像素点
-func (i *Image) WaterMark(src interface{}, X, Y int) *Image {
+// x0, y0 坐标,像素点
+func (i *Image) WaterMark(src interface{}, x0, y0 int) *Image {
 	switch t := src.(type) {
 	case Image:
-		return i.imgMark(t, X, Y)
+		return i.Over(&t, x0, y0)
 	case Text:
-		return i.textMark(t, X, Y)
+		return i.textMark(&t, x0, y0)
 	default:
 		return nil
 	}
-}
-
-//图片水印
-func (i *Image) imgMark(img Image, x0, y0 int) *Image {
-	i.Create()
-	off := image.Pt(x0, y0)
-	draw.Draw(i.Img, i.Img.Bounds(), i.Img, image.ZP, draw.Src)
-	draw.Draw(i.Img, img.Img.Bounds().Add(off), img.Img, image.ZP, draw.Over)
-
-	return i
 }
 
 // 在图片上画
@@ -115,22 +107,37 @@ func (i *Image) Draw(src image.Image, sp image.Point) {
 	draw.Draw(i.Img, i.Img.Bounds(), src, sp, draw.Over)
 }
 
-// 给图片添加文字水印
+// textMark给图片添加文字水印
 // 参数
-func (i *Image) textMark(t Text, X, Y int) *Image {
-	t.Init()
-	i.Create()
+func (i *Image) textMark(t *Text, x0, y0 int) *Image {
+	t.Create()
 	t.Ctx.SetDst(i.Img)
 	t.Ctx.SetClip(i.Img.Bounds())
-	if err := t.Draw(X, Y); err != nil {
-		log.Println(err)
+
+	log.Printf("%#v", *t)
+	if err := t.Draw(x0, y0); err != nil {
+		log.Println("水印失败", err)
 	}
 
 	return i
 }
 
+// Crop 图片裁剪成指定大小
+// width 和 height 分别为目标图片的长和宽
+func (i *Image) Crop(width, height uint) *Image {
 
-// 保存为jpg文件
+	return i
+}
+
+// Thumb生成缩略图
+// width 和 height 分别为目标图片的长和宽
+func (i *Image) Thumb(width, height uint) *Image {
+
+	return i
+}
+
+
+// SaveTo保存为jpg文件
 // 参数path为保存路径
 // 参数quality图片质量
 func (i *Image) SaveTo(path string, quality int) {

@@ -1,7 +1,6 @@
 package image
 
 import (
-	image2 "image"
 	"image/color"
 	"log"
 	"math/rand"
@@ -30,7 +29,6 @@ type Verify struct {
 	Height    uint
 	Length    uint8
 	BgColor   color.RGBA
-	img       image2.Image
 }
 
 // 宽度
@@ -82,6 +80,27 @@ func (v *Verify) setContent() string {
 
 // 生成验证码
 func (v *Verify) Create() *Verify {
+	v.setContent()
+	bgImg := Image{
+		Width:   v.Width,
+		Height:  v.Height,
+		BgColor: v.BgColor,
+	}
+
+	// 背景画布
+	//bgImg.Blank().SaveTo("save.jpg", 100)
+	bgImg.Blank()
+
+	// 验证码字符串
+	text := Text{
+		FontDPI: 200,
+		FontSize: 16,
+		Color:   color.RGBA{225, 0, 0,255},
+		Content: []string{v.Content},
+	}
+
+	bgImg.WaterMark(text, 15, 60).SaveTo("save.jpg", 100)
+
 	//
 	//conts := []string{v.setContent()}
 	////字体图片

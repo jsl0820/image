@@ -54,3 +54,16 @@ func TestReplace(t *testing.T) {
 	img1.Create().Replace(img2).SaveTo("save.jpg", 10)
 }
 
+func TestWaterMark(t *testing.T) {
+	var text = Text{
+		Content:[]string{"ERTYU"},
+		Color:color.RGBA{255,0, 0, 255},
+	}
+
+	var img = New("aaa.jpg")
+	img.WaterMark(text, 100, 100 ).SaveTo("save.jpg", 100)
+}
+
+func TestImage_Crop(t *testing.T) {
+	
+}
