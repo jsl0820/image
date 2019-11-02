@@ -2,6 +2,7 @@ package image
 
 import (
 	"bufio"
+	"github.com/nfnt/resize"
 	"image"
 	"image/color"
 	"image/draw"
@@ -14,7 +15,6 @@ import (
 
 //实例化
 func New(src string) *Image {
-
 	f, err := os.Open(src)
 	if err != nil {
 		log.Println("打开文件出错:", err)
@@ -45,7 +45,6 @@ func New(src string) *Image {
 	}
 
 	return img
-
 }
 
 type Image struct {
@@ -123,24 +122,34 @@ func (i *Image) textMark(t *Text, x0, y0 int) *Image {
 }
 
 // Crop 图片裁剪成指定大小
-// width 和 height 分别为目标图片的长和宽
-func (i *Image) Crop(width, height uint) *Image {
-
+// x0 和 y0 分别为目标图片的七点
+// x1 和 y1 分别为截取的长和宽
+func (i *Image) Crop(x0, y0, x1, y1 int) *Image {
+	i.Img = image.NewRGBA(image.Rect(0, 0, x1, y1))
+	draw.Draw(i.Img, i.Source.Bounds().Add(image.Pt(-x0, -y0)), i.Source, i.Source.Bounds().Min, draw.Src)
 	return i
 }
 
 // Thumb生成缩略图
 // width 和 height 分别为目标图片的长和宽
 func (i *Image) Thumb(width, height uint) *Image {
+	if width == 0 || height == 0 {
+		width = uint(i.Source.Bounds().Max.X)
+		height = uint(i.Source.Bounds().Max.Y)
+	}
 
+	i.Img = resize.Thumbnail(width, height, i.Source, resize.Lanczos3)
 	return i
 }
-
 
 // SaveTo保存为jpg文件
 // 参数path为保存路径
 // 参数quality图片质量
 func (i *Image) SaveTo(path string, quality int) {
+	if  quality == 0{
+		quality = 100
+	}
+
 	out, err := os.Create(path)
 	if err != nil {
 		log.Println(err)

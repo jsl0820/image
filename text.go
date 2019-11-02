@@ -89,4 +89,4 @@ func (t *Text) Draw(x0, y0 int) error {
 }
 
 // 绘制单个字符
-func (t *Text) DrawLetter
+//func (t *Text) DrawLetter

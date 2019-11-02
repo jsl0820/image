@@ -64,6 +64,10 @@ func TestWaterMark(t *testing.T) {
 	img.WaterMark(text, 100, 100 ).SaveTo("save.jpg", 100)
 }
 
+//
 func TestImage_Crop(t *testing.T) {
-	
+	img := New("th.jpg")
+	img.Crop(20, 20, 250, 250).SaveTo("save.jpg", 10)
 }
+
+
