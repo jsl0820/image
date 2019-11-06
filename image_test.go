@@ -70,4 +70,8 @@ func TestImage_Crop(t *testing.T) {
 	img.Crop(20, 20, 250, 250).SaveTo("save.jpg", 10)
 }
 
+func TestImage_Thumb(t *testing.T) {
+	img := New("testdata/th.jpg")
+	img.Thumb(10, 10).SaveTo("testdata/thhumb.jpeg", 10)
+}
 

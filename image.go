@@ -8,9 +8,11 @@ import (
 	"image/draw"
 	"image/jpeg"
 	_ "image/jpeg"
+	"image/png"
 	_ "image/png"
 	"log"
 	"os"
+	"strings"
 )
 
 //实例化
@@ -138,29 +140,47 @@ func (i *Image) Thumb(width, height uint) *Image {
 		height = uint(i.Source.Bounds().Max.Y)
 	}
 
-	i.Img = resize.Thumbnail(width, height, i.Source, resize.Lanczos3)
+	i.Source = resize.Thumbnail(width, height, i.Source, resize.Lanczos3)
+
 	return i
 }
 
 // SaveTo保存为jpg文件
 // 参数path为保存路径
 // 参数quality图片质量
-func (i *Image) SaveTo(path string, quality int) {
+func (i *Image) SaveTo(path string, quality int)  {
 	if  quality == 0{
 		quality = 100
 	}
 
 	out, err := os.Create(path)
+	defer out.Close()
+
 	if err != nil {
 		log.Println(err)
 		os.Exit(-1)
 	}
 
-	defer out.Close()
 	b := bufio.NewWriter(out)
-	if err := jpeg.Encode(b, i.Img, &jpeg.Options{Quality: quality}); err != nil {
-		log.Println(err)
-		os.Exit(-1)
+	suffix := strings.Split(path, ".")[1]
+	switch suffix {
+	case "jpeg":
+		if err := jpeg.Encode(b, i.Img, &jpeg.Options{Quality: quality}); err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
+	case "png":
+		if err := png.Encode(b, i.Img); err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
+	case "gif":
+		if err := jpeg.Encode(b, i.Img, &jpeg.Options{Quality: quality}); err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
+	default:
+		log.Println("不能识别的编码格式")
 	}
 
 	if err := b.Flush(); err != nil {
@@ -168,3 +188,5 @@ func (i *Image) SaveTo(path string, quality int) {
 		os.Exit(-1)
 	}
 }
+
+

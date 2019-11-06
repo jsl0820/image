@@ -2,7 +2,9 @@ package image
 
 import (
 	"image/color"
+	"image/draw"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -88,7 +90,6 @@ func (v *Verify) Create() *Verify {
 	}
 
 	// 背景画布
-	//bgImg.Blank().SaveTo("save.jpg", 100)
 	bgImg.Blank()
 
 	// 验证码字符串
@@ -99,70 +100,68 @@ func (v *Verify) Create() *Verify {
 		Content: []string{v.Content},
 	}
 
-	bgImg.WaterMark(text, 15, 60).SaveTo("save.jpg", 100)
-
-	//
-	//conts := []string{v.setContent()}
-	////字体图片
-	//textImg := &Text{
-	//	Color: v.FontColor,
-	//	FontSrc: v.setContent(),
-	//	Content: conts,
-	//}
-	//
-	//// 背景图片
-	//bgIamge := &Image{
-	//	BgColor: v.BgColor,
-	//	Width: v.setWidth(),
-	//	Height:v.setHeight(),
-	//}
-	//
-	//bgIamge.Create()
-	//bgIamge.Draw(testImg)
-	//
-	//v.img = bgIamge.Img
-	//v.writeNoise()
-	//v.writeNoise()
-
-	return v
-	//设置验证码图片
-	//生成字体图片图片
-	// 字体内容
+	bgImg.WaterMark(text, 15, 60)
 	// 噪点
-	// 干扰曲线
+	//if v.UseNoise {
+	//	for i := 0 ; i < 10;i++  {
+	//		v.writeNoiseg(bgImg.Img)
+	//	}
+	//}
+
+	// 曲线
+	if v.UseCurve {
+		v.writeCurve(bgImg.Img)
+	}
+
+	bgImg.SaveTo("testdata/save.jpeg", 100)
+	return v
 }
 
 //噪点
-func (v *Verify) writeNoiseg() {
-	log.Print("111")
-	//
-	//if v.UseNoise {
-	//	for i := 0; i<50; i++ {
-	//		x := rand.Intn(int(v.Width))
-	//		for j := 0 ; j < 50 ; j++  {
-	//			y := rand.Intn(int(v.Height))
-	//			c := v.randColor()
-	//			v.img.Set(x, y, c)
-	//		}
-	//	}
-	//}
+func (v *Verify) writeNoiseg(img draw.Image ) {
+	for i := 0; i<50; i++ {
+		X := rand.Intn(int(v.Width))
+		Y := rand.Intn(int(v.Height))
+
+		for j := 0 ; j < 50 ; j++  {
+			C := v.randColor()
+			img.Set(X, Y, C)
+			img.Set(X+1, Y, C)
+			img.Set(X-1, Y, C)
+		}
+	}
 }
 
 // 随机颜色
 func (v *Verify) randColor() color.RGBA {
-	r := rand.Intn(255)
-	g := rand.Intn(255)
-	b := rand.Intn(255)
+	R := rand.Intn(150 + 225) - 150
+	G := rand.Intn(150 + 225) - 150
+	B := rand.Intn(150 + 225) - 150
 
-	return color.RGBA{uint8(r), uint8(g), uint8(b), 1}
+	return color.RGBA{uint8(R), uint8(G), uint8(B), 1}
 }
 
 // 干扰曲线
-func (v *Verify) writeCurve() {
-	if v.UseCurve {
+// 曲线函数：Y=Asin(WX+φ)+B
+func (v *Verify) writeCurve(img draw.Image ) {
+	//height := float64(v.Height)
 
+	//A := rand.Intn(int(math.Ceil(height / 2)))
+	//B := height / 4
+	//W := math.Pi
+	C := v.randColor()
+
+
+	for i := 0; i < int(v.Width); i++ {
+		X := float64(i)
+		Y := 70 * math.Sin(math.Pi*X) + 40
+
+		log.Println(X, Y)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
 	}
 }
+
+
 
 // 检验
 func (v *Verify) Check(input string) bool {

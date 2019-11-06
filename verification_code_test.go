@@ -12,6 +12,8 @@ func TestVerifyCreate(t *testing.T) {
 		Width:   240,
 		Height:  80,
 		Length:  6,
+		UseNoise: true,
+		UseCurve: true,
 		BgColor: color.RGBA{225, 255, 255, 255},
 	}
 
