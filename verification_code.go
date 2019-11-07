@@ -144,24 +144,33 @@ func (v *Verify) randColor() color.RGBA {
 // 干扰曲线
 // 曲线函数：Y=Asin(WX+φ)+B
 func (v *Verify) writeCurve(img draw.Image ) {
-	//height := float64(v.Height)
+	height := float64(v.Height)
 
-	//A := rand.Intn(int(math.Ceil(height / 2)))
-	//B := height / 4
-	//W := math.Pi
+	rand.Seed(time.Now().UnixNano())
+	a := int(math.Ceil(height / 2))
+	A := rand.Intn(a)
+	b := int(math.Ceil(height / 4))
+	B := rand.Intn(2 * b) - b
+
+	T := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
 	C := v.randColor()
-
-
+	log.Println(B)
 	for i := 0; i < int(v.Width); i++ {
 		X := float64(i)
-		Y := 70 * math.Sin(math.Pi*X) + 40
+		Y := float64(A) * math.Sin((2* math.Pi / float64(T)) * X) + float64(B)
 
 		log.Println(X, Y)
 		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) - 1), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 1), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 2), C)
 	}
 }
 
+// 画图
+func (v *Verify)setPixel(){
 
+}
 
 // 检验
 func (v *Verify) Check(input string) bool {
