@@ -145,21 +145,37 @@ func (v *Verify) randColor() color.RGBA {
 // 曲线函数：Y=Asin(WX+φ)+B
 func (v *Verify) writeCurve(img draw.Image ) {
 	height := float64(v.Height)
-
 	rand.Seed(time.Now().UnixNano())
 	a := int(math.Ceil(height / 2))
-	A := rand.Intn(a)
 	b := int(math.Ceil(height / 4))
-	B := rand.Intn(2 * b) - b
+	x := rand.Intn(int(v.Width))
 
-	T := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
+	A0 := rand.Intn(a)
+	B0 := rand.Intn(2 * b) - b
+	T0 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
+
 	C := v.randColor()
-	log.Println(B)
-	for i := 0; i < int(v.Width); i++ {
+	log.Println(B0)
+	for i := 0; i < x; i++ {
 		X := float64(i)
-		Y := float64(A) * math.Sin((2* math.Pi / float64(T)) * X) + float64(B)
+		Y := float64(A0) * math.Sin((2* math.Pi / float64(T0)) * X) + float64(B0)
 
 		log.Println(X, Y)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) - 1), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 1), C)
+		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 2), C)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	A1 := rand.Intn(a)
+	//B1 := rand.Intn(2 * b) - b
+	T1 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
+
+	for i := x; i < int(v.Width); i++ {
+		X := float64(i)
+		Y := float64(A1) * math.Sin((2* math.Pi / float64(T1)) * X) + float64(B0)
+
 		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
 		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) - 1), C)
 		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 1), C)
