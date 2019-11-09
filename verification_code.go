@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type Verify struct {
 	UseImgBg  bool
 	UseNoise  bool
 	UseCurve  bool
+	CurveWeight int
 	FontSize  float32
 	FontColor color.RGBA
 	Width     uint
@@ -40,7 +42,7 @@ func (v *Verify) setWidth() uint {
 		length := float32(v.Length)
 		v.Width = uint(length*size*1.5 + length*size/2)
 	}
-
+	log.Println("宽度", v.Width)
 	return v.Width
 }
 
@@ -83,30 +85,46 @@ func (v *Verify) setContent() string {
 // 生成验证码
 func (v *Verify) Create() *Verify {
 	v.setContent()
+	if (v.FontSize == 0){
+		v.FontSize = 25
+	}
+
 	bgImg := Image{
-		Width:   v.Width,
-		Height:  v.Height,
+		Width:   v.setWidth(),
+		Height:  v.setHeight(),
 		BgColor: v.BgColor,
 	}
 
+	log.Printf("%#v", *v)
 	// 背景画布
 	bgImg.Blank()
 
 	// 验证码字符串
-	text := Text{
-		FontDPI: 200,
-		FontSize: 16,
-		Color:   color.RGBA{225, 0, 0,255},
-		Content: []string{v.Content},
+	strs := strings.Split(v.Content, "")
+	x0 := (float32(RandInt(12, 16)) / 10 )  *  v.FontSize
+
+	for i :=0 ; i < len(strs); i++ {
+		text := Text{
+			FontDPI: 200,
+			FontSize: float64(v.FontSize),
+			Color:    v.randFontColor(),
+			Content:  []string{strs[i]},
+		}
+
+		y0 := 20
+		x0 =+ x0 +  (float32(RandInt(12, 16)) / 10 )  * 1.2  *  v.FontSize
+		//bgImg.WaterMark(text,  int(x0), int(y0))
+		log.Println("距离", x0, y0)
+		bgImg.WaterMark(text, int(x0), y0)
 	}
 
-	bgImg.WaterMark(text, 15, 60)
-	// 噪点
-	//if v.UseNoise {
-	//	for i := 0 ; i < 10;i++  {
-	//		v.writeNoiseg(bgImg.Img)
-	//	}
-	//}
+
+	//噪点
+	if v.UseNoise {
+		for i := 0 ; i < 10;i++  {
+			v.writeNoiseg(bgImg.Img)
+		}
+	}
 
 	// 曲线
 	if v.UseCurve {
@@ -125,9 +143,10 @@ func (v *Verify) writeNoiseg(img draw.Image ) {
 
 		for j := 0 ; j < 50 ; j++  {
 			C := v.randColor()
-			img.Set(X, Y, C)
-			img.Set(X+1, Y, C)
-			img.Set(X-1, Y, C)
+			go func(X, Y int , C color.RGBA){
+				img.Set(X, Y, C)
+				img.Set(X+1, Y, C)
+			}(X, Y, C);
 		}
 	}
 }
@@ -137,58 +156,84 @@ func (v *Verify) randColor() color.RGBA {
 	R := rand.Intn(150 + 225) - 150
 	G := rand.Intn(150 + 225) - 150
 	B := rand.Intn(150 + 225) - 150
+	return color.RGBA{uint8(R), uint8(G), uint8(B), 1}
+}
+
+// 随机字体颜色
+func (v *Verify) randFontColor() color.RGBA {
+	rand.Seed(time.Now().UnixNano())
+
+	R := RandInt(1, 150)
+	G := RandInt(1, 150)
+	B := RandInt(1, 150)
 
 	return color.RGBA{uint8(R), uint8(G), uint8(B), 1}
 }
 
-// 干扰曲线
-// 曲线函数：Y=Asin(WX+φ)+B
-func (v *Verify) writeCurve(img draw.Image ) {
+
+// 画干扰曲线
+func (v *Verify) writeCurve(img draw.Image) {
 	height := float64(v.Height)
 	rand.Seed(time.Now().UnixNano())
-	a := int(math.Ceil(height / 2))
-	b := int(math.Ceil(height / 4))
+	a0 := int(math.Ceil(height / 2))
+	b0 := int(math.Ceil(height / 4))
+	t0 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
 	x := rand.Intn(int(v.Width))
-
-	A0 := rand.Intn(a)
-	B0 := rand.Intn(2 * b) - b
-	T0 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
-
-	C := v.randColor()
-	log.Println(B0)
-	for i := 0; i < x; i++ {
-		X := float64(i)
-		Y := float64(A0) * math.Sin((2* math.Pi / float64(T0)) * X) + float64(B0)
-
-		log.Println(X, Y)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) - 1), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 1), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 2), C)
+	rgba := v.randColor()
+	curve1 := &SinCurve{
+		A : float64(rand.Intn(a0)),
+		B : float64(rand.Intn(2 * b0) - b0) + (height / 2 ),
+		W : float64(2 * math.Pi / float64(t0)),
 	}
+
+	log.Printf("%#v", curve1)
+
+	v.setPixel(img,0, x, rgba, curve1)
 
 	rand.Seed(time.Now().UnixNano())
-	A1 := rand.Intn(a)
-	//B1 := rand.Intn(2 * b) - b
-	T1 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
+	a1 := int(math.Ceil(height / 2))
+	t1 := rand.Intn(int(v.Height) + int(v.Width) * 2) - int(v.Height)
 
-	for i := x; i < int(v.Width); i++ {
-		X := float64(i)
-		Y := float64(A1) * math.Sin((2* math.Pi / float64(T1)) * X) + float64(B0)
+	A1 := float64(RandInt(0, a1))
+	W1 := float64(2 * math.Pi / float64(t1))
+	B2 := curve1.DirectY(float64(x)) - (A1 * math.Sin(W1 * float64(x))) - (height / 2 )
 
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y)), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) - 1), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 1), C)
-		img.Set(int(math.Ceil(X)), int(math.Ceil(Y) + 2), C)
+	curve2 := &SinCurve{
+		A : A1,
+		B : B2 + (height / 2 ),
+		W : W1,
 	}
+
+	v.setPixel(img, x, int(v.Width) , rgba, curve2)
 }
 
-// 画图
-func (v *Verify)setPixel(){
-
+type SinCurve struct {
+	A float64
+	W float64
+	B float64
+	F float64
 }
 
-// 检验
+func (s *SinCurve)DirectY(x float64) float64{
+	return s.A * math.Sin(s.W * x + s.F) + s.B
+}
+
+// 干扰线
+func (v *Verify)setPixel(img draw.Image, x0, x1 int,  color color.RGBA, curve * SinCurve)*Verify{
+	for i := x0; i < x1; i++ {
+		go func(i int) {
+			X := float64(i)
+			Y := curve.DirectY(X)
+			log.Println(X, Y)
+			for i := 0 ; i < v.CurveWeight ; i ++  {
+				img.Set(int(math.Ceil(X)), int(math.Ceil(Y + float64(i))), color)
+			}
+		}(i)
+	}
+	return v
+}
+
+// 对比
 func (v *Verify) Check(input string) bool {
 	if string(v.Content) == input {
 		return true
@@ -196,3 +241,10 @@ func (v *Verify) Check(input string) bool {
 
 	return false
 }
+
+// 两整数之间取随机数
+func RandInt(min, max int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(max + min ) - min
+}
+
