@@ -86,7 +86,7 @@ func (v *Verify) setContent() string {
 func (v *Verify) Create() *Verify {
 	v.setContent()
 	if (v.FontSize == 0){
-		v.FontSize = 25
+		v.FontSize = 20
 	}
 
 	bgImg := Image{
@@ -101,23 +101,20 @@ func (v *Verify) Create() *Verify {
 
 	// 验证码字符串
 	strs := strings.Split(v.Content, "")
-	x0 := (float32(RandInt(12, 16)) / 10 )  *  v.FontSize
-
+	var offX float64
 	for i :=0 ; i < len(strs); i++ {
 		text := Text{
-			FontDPI: 200,
+			FontDPI:  100,
 			FontSize: float64(v.FontSize),
 			Color:    v.randFontColor(),
 			Content:  []string{strs[i]},
 		}
 
-		y0 := 20
-		x0 =+ x0 +  (float32(RandInt(12, 16)) / 10 )  * 1.2  *  v.FontSize
-		//bgImg.WaterMark(text,  int(x0), int(y0))
-		log.Println("距离", x0, y0)
-		bgImg.WaterMark(text, int(x0), y0)
+		offY := float64(v.FontSize) * 1.6
+		f := float64(RandInt(12, 16)) / 10
+		offX = f * float64(v.FontSize) + offX
+		bgImg.WaterMark(text, int(offX), int(offY))
 	}
-
 
 	//噪点
 	if v.UseNoise {
@@ -153,9 +150,10 @@ func (v *Verify) writeNoiseg(img draw.Image ) {
 
 // 随机颜色
 func (v *Verify) randColor() color.RGBA {
-	R := rand.Intn(150 + 225) - 150
-	G := rand.Intn(150 + 225) - 150
-	B := rand.Intn(150 + 225) - 150
+	rand.Seed(time.Now().UnixNano())
+	R := RandInt(0, 225)
+	G := RandInt(0, 225)
+	B := RandInt(0, 225)
 	return color.RGBA{uint8(R), uint8(G), uint8(B), 1}
 }
 
@@ -245,6 +243,6 @@ func (v *Verify) Check(input string) bool {
 // 两整数之间取随机数
 func RandInt(min, max int) int {
 	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(max + min ) - min
+	return rand.Intn(max - min) + min
 }
 
